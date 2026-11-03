@@ -47,6 +47,10 @@ jobs:
           name: One_Piece-jar
           path: dist
 
+      # 若以后引入 shade，会多出 original-*.jar；发布时只保留最终插件 jar
+      - name: Drop shaded original jar
+        run: rm -f dist/original-*.jar
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
