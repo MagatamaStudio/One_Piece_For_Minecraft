@@ -1,7 +1,10 @@
 name: One_Piece
 version: 1.0.15
 main: com.example.banitem.BanItemSaver
-api-version: 1.21
+# 与 pom.xml 里编译用的 spigot-api 保持一致（1.18.2）。
+# 原来写 1.21，但代码是按 1.18.2 的 API 编译的：声明 1.21 会在老服务端被拒绝加载，
+# 在新服务端上又可能调用到并不存在的 API。
+api-version: 1.18
 authors: [ManakaGekka]
 description: Saves banned players' items in a barrel.
 commands:

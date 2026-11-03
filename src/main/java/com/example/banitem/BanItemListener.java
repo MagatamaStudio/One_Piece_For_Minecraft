@@ -39,10 +39,13 @@ public class BanItemListener implements Listener {
 
     @EventHandler
     public void onPlayerBan(PlayerKickEvent event) {
-        String reason = event.getReason();
-        if (reason == null || !reason.toLowerCase(Locale.ROOT).contains("banned")) return;
-
         Player player = event.getPlayer();
+        // 触发条件：玩家确实在封禁列表里（名称 / UUID / IP），或者踢出理由里带 banned。
+        // 原来只看理由字符串，中文/自定义封禁话术会漏判，且 reason 可能为 null 导致 NPE。
+        if (!isBanned(player) && !reasonMentionsBan(event.getReason())) {
+            return;
+        }
+
         World world = player.getWorld();
 
         // 先收集所有需要搬迁的物品，等全部入库或掉落之后才允许清空玩家
@@ -189,6 +192,51 @@ public class BanItemListener implements Listener {
             }
         }
         placedBlocks.clear();
+    }
+
+    /**
+     * 玩家是否在服务器的封禁列表里（名称 / UUID / IP 任一命中）。
+     *
+     * <p>比只匹配踢出理由可靠：封禁理由是可以本地化或自定义的，而封禁列表是权威状态。
+     * 用 {@link Bukkit#getBannedPlayers()} / {@link Bukkit#getIpBans()} 而不是 BanList.Type.UUID，
+     * 这样在 1.18 及更老的 API 上也能编译。
+     */
+    private boolean isBanned(Player player) {
+        try {
+            for (OfflinePlayer banned : Bukkit.getBannedPlayers()) {
+                if (banned == null) {
+                    continue;
+                }
+                if (banned.getUniqueId() != null && banned.getUniqueId().equals(player.getUniqueId())) {
+                    return true;
+                }
+                String bannedName = banned.getName();
+                if (bannedName != null && bannedName.equalsIgnoreCase(player.getName())) {
+                    return true;
+                }
+            }
+            if (player.getAddress() != null && player.getAddress().getAddress() != null) {
+                String ip = player.getAddress().getAddress().getHostAddress();
+                if (Bukkit.getIPBans().contains(ip)) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            // 查询封禁列表不应影响主流程，失败时退回理由匹配
+            Bukkit.getLogger().warning("[BanItem] 查询封禁列表失败: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * 踢出理由里是否提到封禁（兼容老行为 / 第三方封禁插件）。
+     */
+    private static boolean reasonMentionsBan(String reason) {
+        if (reason == null) {
+            return false;
+        }
+        String lower = reason.toLowerCase(Locale.ROOT);
+        return lower.contains("banned") || lower.contains("ban") || reason.contains("封禁") || reason.contains("封停");
     }
 
     private String encryptCoordinates(Location loc) {

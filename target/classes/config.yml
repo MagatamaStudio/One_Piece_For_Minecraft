@@ -1,4 +1,0 @@
-# 是否开启封禁后玩家物品所在物品的木桶的坐标加密
-encrypt-coordinates: true
-# 自定义公屏提示语
-broadcast-message: "被封禁玩家 {player} 的物品已保存，位置：{coords}"
