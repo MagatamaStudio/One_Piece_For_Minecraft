@@ -20,7 +20,9 @@
     <repositories>
         <repository>
             <id>spigot-repo</id>
-            <url>https://repo.spigotmc.org/maven2/</url>
+            <!-- 原来的 https://repo.spigotmc.org/maven2/ 早已停用（404），换回官方 Sonatype 快照仓库，
+                 否则本地/CI 都拉不到 spigot-api -->
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
     </repositories>
 
